@@ -57,7 +57,7 @@ async function startExperience() {
   floor.receiveShadow = !compact.matches;
   scene.add(floor);
 
-  const chunks = Array.from({ length: 9 }, (_, index) => `models/chunks/porsche-911-${String(index).padStart(2, '0')}.txt`);
+  const chunks = Array.from({ length: 9 }, (_, index) => `models/porsche-911-${String(index).padStart(2, '0')}.txt`);
   let encoded = '';
   for (let index = 0; index < chunks.length; index += 1) {
     const response = await fetch(chunks[index]);
