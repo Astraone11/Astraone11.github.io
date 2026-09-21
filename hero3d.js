@@ -12,8 +12,10 @@ const progressBar = document.querySelector('#hero-load-bar');
 const engineeringButton = document.querySelector('#engineering-view');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const compact = matchMedia('(max-width: 760px)');
+const webglContext = canvas?.getContext('webgl2', { alpha: true, antialias: !compact.matches, powerPreference: 'high-performance' })
+  || canvas?.getContext('webgl', { alpha: true, antialias: !compact.matches, powerPreference: 'high-performance' });
 
-if (!canvas || !view || !window.WebGLRenderingContext) {
+if (!canvas || !view || !window.WebGLRenderingContext || !webglContext) {
   view?.classList.add('is-3d-failed');
   if (loaderUI) loaderUI.textContent = '3D tidak didukung · menampilkan visual cadangan';
 } else {
@@ -24,7 +26,7 @@ if (!canvas || !view || !window.WebGLRenderingContext) {
 }
 
 async function startExperience() {
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !compact.matches, powerPreference: 'high-performance' });
+  const renderer = new THREE.WebGLRenderer({ canvas, context: webglContext, alpha: true, antialias: !compact.matches, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(devicePixelRatio, compact.matches ? 1.25 : 1.75));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
