@@ -14,8 +14,15 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const compact = matchMedia('(max-width: 760px)');
 const webglContext = canvas?.getContext('webgl2', { alpha: true, antialias: !compact.matches, powerPreference: 'high-performance' })
   || canvas?.getContext('webgl', { alpha: true, antialias: !compact.matches, powerPreference: 'high-performance' });
+const webglReady = (() => {
+  try {
+    return Boolean(webglContext && !webglContext.isContextLost() && webglContext.getParameter(webglContext.VERSION));
+  } catch {
+    return false;
+  }
+})();
 
-if (!canvas || !view || !window.WebGLRenderingContext || !webglContext) {
+if (!canvas || !view || !window.WebGLRenderingContext || !webglReady) {
   view?.classList.add('is-3d-failed');
   if (loaderUI) loaderUI.textContent = '3D tidak didukung · menampilkan visual cadangan';
 } else {
