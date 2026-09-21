@@ -162,3 +162,36 @@ if(!reducedMotion.matches&&matchMedia('(pointer:fine)').matches){
   hero.addEventListener('pointermove',event=>{px=(event.clientX/innerWidth-.5)*12;py=(event.clientY/innerHeight-.5)*9;if(!pointerFrame){pointerFrame=true;requestAnimationFrame(()=>{hero.style.setProperty('--pointer-x',px+'px');hero.style.setProperty('--pointer-y',py+'px');pointerFrame=false})}});
   hero.addEventListener('pointerleave',()=>{hero.style.setProperty('--pointer-x','0px');hero.style.setProperty('--pointer-y','0px')});
 }
+
+const cameraShots=[
+  {image:'mission-x-4k.webp',alt:'Porsche Mission X, tampak tiga perempat depan',title:'FRONT QUARTER'},
+  {image:'mission-x-4k.webp',alt:'Detail lampu depan Porsche Mission X',title:'HEADLIGHTS'},
+  {image:'911-gt3-rs-4k.webp',alt:'Detail roda Porsche 911 GT3 RS',title:'WHEELS'},
+  {image:'gt3-r-4k.webp',alt:'Detail sayap belakang Porsche 911 GT3 R',title:'REAR WING'}
+];
+const cameraFrame=$('camera-frame'),cameraImage=$('camera-image');
+let currentShot=0,shotTimer,shotTransition,manualShot=false;
+function showShot(index,manual=false){
+  if(index===currentShot&&manual)return;
+  if(manual){manualShot=true;clearInterval(shotTimer)}
+  currentShot=index;
+  const shot=cameraShots[index];
+  clearTimeout(shotTransition);
+  cameraFrame.classList.add('changing');
+  shotTransition=setTimeout(()=>{
+    cameraFrame.dataset.shot=String(index);
+    cameraImage.src=`images/${shot.image}`;
+    cameraImage.alt=shot.alt;
+    $('camera-frame-index').textContent=`0${index+1} / 04`;
+    $('camera-frame-title').textContent=shot.title;
+    $('camera-rail').querySelectorAll('button').forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));
+    requestAnimationFrame(()=>cameraFrame.classList.remove('changing'));
+  },reducedMotion.matches?0:220);
+}
+$('camera-rail').addEventListener('click',event=>{const button=event.target.closest('[data-shot]');if(button)showShot(Number(button.dataset.shot),true)});
+const cameraObserver=new IntersectionObserver(entries=>{
+  const visible=entries.some(entry=>entry.isIntersecting);
+  clearInterval(shotTimer);
+  if(visible&&!manualShot&&!reducedMotion.matches)shotTimer=setInterval(()=>showShot((currentShot+1)%cameraShots.length),5200);
+},{threshold:.2});
+cameraObserver.observe($('camera-gallery'));
