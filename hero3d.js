@@ -27,7 +27,7 @@ async function startExperience() {
   renderer.setPixelRatio(Math.min(devicePixelRatio, compact.matches ? 1.25 : 1.75));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.18;
+  renderer.toneMappingExposure = 1.04;
   renderer.shadowMap.enabled = !compact.matches;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -36,21 +36,27 @@ async function startExperience() {
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture;
 
-  const key = new THREE.DirectionalLight(0xffffff, 5.2);
-  key.position.set(4.5, 7, 5);
+  const key = new THREE.DirectionalLight(0xffffff, 3.7);
+  key.position.set(4.5, 7.5, 5.5);
   key.castShadow = !compact.matches;
   key.shadow.mapSize.set(1024, 1024);
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0xa9cfff, 4.2);
+  const rim = new THREE.DirectionalLight(0xd9e9f8, 2.6);
   rim.position.set(-5, 3.5, -4);
   scene.add(rim);
-  const redRim = new THREE.PointLight(0xff493f, 17, 12, 2);
-  redRim.position.set(-3, 1.2, 3);
-  scene.add(redRim, new THREE.HemisphereLight(0xe9f3ff, 0x12161c, 2.4));
+  const accentLight = new THREE.PointLight(0xe7f2ff, 8, 13, 2);
+  accentLight.position.set(-3, 1.8, 3);
+  const roofLight = new THREE.RectAreaLight(0xffffff, 7, 5.5, 2.5);
+  roofLight.position.set(0, 6, 1.5);
+  roofLight.lookAt(0, 0, 0);
+  const sideLight = new THREE.RectAreaLight(0xcfe7ff, 4.5, 3, 4);
+  sideLight.position.set(-4.5, 2.8, -1.5);
+  sideLight.lookAt(0, .7, 0);
+  scene.add(accentLight, roofLight, sideLight, new THREE.HemisphereLight(0xffffff, 0xb8c5d2, 2.15));
 
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(5.7, compact.matches ? 48 : 96),
-    new THREE.MeshStandardMaterial({ color: 0x111820, metalness: .72, roughness: .34, transparent: true, opacity: .82 })
+    new THREE.MeshStandardMaterial({ color: 0xe8edf1, metalness: .2, roughness: .42, transparent: true, opacity: .88 })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.scale.y = .42;
@@ -97,7 +103,11 @@ async function startExperience() {
       const materials = Array.isArray(object.material) ? object.material : [object.material];
       materials.forEach(material => {
         if (!material) return;
-        material.envMapIntensity = material.name === 'WindowsTint' ? 1.45 : 1.8;
+        material.envMapIntensity = material.name === 'WindowsTint' ? 1.3 : 1.55;
+        if (material.isMeshStandardMaterial && material.name !== 'WindowsTint') {
+          material.roughness = THREE.MathUtils.clamp(material.roughness ?? .34, .2, .48);
+          material.metalness = THREE.MathUtils.clamp(material.metalness ?? .55, .18, .92);
+        }
         if (material.name === 'WindowsTint') {
           material.transparent = true;
           material.opacity = .58;
@@ -137,13 +147,8 @@ async function startExperience() {
   const pointers = new Map();
   let pinchDistance = 0;
 
-  const smooth = value => value * value * (3 - 2 * value);
-  const cameraAt = progress => {
-    const sections = path.length - 1;
-    const raw = Math.min(.9999, Math.max(0, progress)) * sections;
-    const index = Math.floor(raw);
-    return path[index].clone().lerp(path[index + 1], smooth(raw - index));
-  };
+  const cameraCurve = new THREE.CatmullRomCurve3(path, false, 'centripetal', .45);
+  const cameraAt = progress => cameraCurve.getPoint(THREE.MathUtils.smootherstep(progress, 0, 1));
   const updateScroll = () => {
     const rect = hero.getBoundingClientRect();
     scrollProgress = Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height - innerHeight)));
@@ -244,8 +249,8 @@ async function startExperience() {
     const zoomed = desired.clone().addScaledVector(desired.clone().normalize(), zoom);
     camera.position.lerp(zoomed, ease);
     camera.lookAt(focus);
-    rim.intensity = 3.8 + Math.sin(time * .001) * .5;
-    redRim.position.z = Math.sin(time * .0006) * 4;
+    rim.intensity = 2.35 + Math.sin(time * .001) * .22;
+    accentLight.position.z = Math.sin(time * .0005) * 3.5;
     renderer.render(scene, camera);
   }
   requestAnimationFrame(render);
