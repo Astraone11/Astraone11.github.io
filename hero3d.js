@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const canvas = document.querySelector('#hero-canvas');
@@ -34,7 +35,16 @@ async function startExperience() {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(34, 1, .05, 100);
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture;
+  let environmentTarget = pmrem.fromScene(new RoomEnvironment(), .04);
+  scene.environment = environmentTarget.texture;
+  new EXRLoader().load('environment/studio-small-09-2k.exr', texture => {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    const nextEnvironment = pmrem.fromEquirectangular(texture);
+    texture.dispose();
+    environmentTarget.dispose();
+    environmentTarget = nextEnvironment;
+    scene.environment = nextEnvironment.texture;
+  }, undefined, () => {});
 
   const key = new THREE.DirectionalLight(0xffffff, 3.7);
   key.position.set(4.5, 7.5, 5.5);
@@ -96,6 +106,7 @@ async function startExperience() {
   floor.position.y = .02;
 
   const wheels = [];
+  const lightMaterials = [];
   car.traverse(object => {
     if (object.isMesh) {
       object.castShadow = !compact.matches;
@@ -113,23 +124,53 @@ async function startExperience() {
           material.opacity = .58;
           material.depthWrite = false;
         }
+        if (material.emissive && material.emissive.getHex() !== 0) {
+          material.emissiveIntensity = .35;
+          lightMaterials.push(material);
+        }
       });
     }
     if (/wheel/i.test(object.name)) wheels.push({ object, base: object.position.clone() });
   });
 
-  const focus = new THREE.Vector3(0, .78, 0);
+  const mobileScale = compact.matches ? 1.2 : 1;
   const path = [
-    new THREE.Vector3(4.7, 2.15, 6.4),
-    new THREE.Vector3(6.8, 1.75, 1.1),
-    new THREE.Vector3(4.9, 2.2, -6.4),
-    new THREE.Vector3(-.8, 5.9, -4.4),
-    new THREE.Vector3(5.4, 2.45, 7.2)
+    new THREE.Vector3(4.8, 2.2, 6.7),
+    new THREE.Vector3(4.3, 1.82, 5.65),
+    new THREE.Vector3(6.5, 1.72, 1.35),
+    new THREE.Vector3(3.05, 1.02, 3.15),
+    new THREE.Vector3(3.45, 1.28, 4.05),
+    new THREE.Vector3(7.15, 1.75, .1),
+    new THREE.Vector3(4.05, 1.22, 3.65),
+    new THREE.Vector3(3.3, .98, 3.02),
+    new THREE.Vector3(5.15, 2.0, -5.75),
+    new THREE.Vector3(6.35, 1.75, 1.25),
+    new THREE.Vector3(4.65, 2.12, 6.3)
+  ].map(point => point.multiplyScalar(mobileScale));
+  const targets = [
+    new THREE.Vector3(0, .78, 0),
+    new THREE.Vector3(0, .72, .2),
+    new THREE.Vector3(0, .72, .15),
+    new THREE.Vector3(.54, .42, .78),
+    new THREE.Vector3(.52, .45, .7),
+    new THREE.Vector3(0, .72, 0),
+    new THREE.Vector3(.42, .58, .82),
+    new THREE.Vector3(.5, .55, .9),
+    new THREE.Vector3(0, .72, -.2),
+    new THREE.Vector3(0, .76, .15),
+    new THREE.Vector3(0, .76, 0)
   ];
+  const focus = targets[0].clone();
+  const desiredFocus = focus.clone();
   const presets = {
-    front: path[0], side: path[1], rear: path[2], top: path[3], reset: path[0]
+    front: new THREE.Vector3(4.8, 2.15, 6.4).multiplyScalar(mobileScale),
+    side: new THREE.Vector3(7.1, 1.75, .1).multiplyScalar(mobileScale),
+    rear: new THREE.Vector3(4.9, 2.2, -6.4).multiplyScalar(mobileScale),
+    top: new THREE.Vector3(-.8, 5.9, -4.4).multiplyScalar(mobileScale),
+    reset: path[0]
   };
   const desired = path[0].clone();
+  let desiredFov = compact.matches ? 43 : 34;
   camera.position.copy(desired);
   camera.lookAt(focus);
 
@@ -148,11 +189,29 @@ async function startExperience() {
   let pinchDistance = 0;
 
   const cameraCurve = new THREE.CatmullRomCurve3(path, false, 'centripetal', .45);
+  const targetCurve = new THREE.CatmullRomCurve3(targets, false, 'centripetal', .45);
   const cameraAt = progress => cameraCurve.getPoint(THREE.MathUtils.smootherstep(progress, 0, 1));
+  const targetAt = progress => targetCurve.getPoint(THREE.MathUtils.smootherstep(progress, 0, 1));
+  const fovAt = progress => {
+    const close = Math.max(0, 1 - Math.abs(progress - .45) / .16);
+    return (compact.matches ? 43 : 34) - close * (compact.matches ? 3 : 6);
+  };
+  addEventListener('nitrova:story', event => {
+    scrollProgress = event.detail.progress;
+    if (!manualTarget) {
+      desired.copy(cameraAt(scrollProgress));
+      desiredFocus.copy(targetAt(scrollProgress));
+      desiredFov = fovAt(scrollProgress);
+    }
+  });
   const updateScroll = () => {
     const rect = hero.getBoundingClientRect();
     scrollProgress = Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height - innerHeight)));
-    if (!manualTarget) desired.copy(cameraAt(scrollProgress));
+    if (!manualTarget) {
+      desired.copy(cameraAt(scrollProgress));
+      desiredFocus.copy(targetAt(scrollProgress));
+      desiredFov = fovAt(scrollProgress);
+    }
   };
   addEventListener('scroll', updateScroll, { passive: true });
   updateScroll();
@@ -164,7 +223,13 @@ async function startExperience() {
       targetYaw = 0;
       targetZoom = 0;
       desired.copy(cameraAt(scrollProgress));
-    } else desired.copy(manualTarget);
+      desiredFocus.copy(targetAt(scrollProgress));
+      desiredFov = fovAt(scrollProgress);
+    } else {
+      desired.copy(manualTarget);
+      desiredFocus.set(0, .78, 0);
+      desiredFov = compact.matches ? 43 : 34;
+    }
     document.querySelectorAll('[data-3d-camera]').forEach(item => item.setAttribute('aria-pressed', String(item === button && name !== 'reset')));
   }));
 
@@ -205,6 +270,7 @@ async function startExperience() {
   view.addEventListener('pointerup', release);
   view.addEventListener('pointercancel', release);
   view.addEventListener('wheel', event => {
+    if (!event.ctrlKey && !event.metaKey) return;
     event.preventDefault();
     targetZoom = THREE.MathUtils.clamp(targetZoom + event.deltaY * .002, -1.4, 2.2);
   }, { passive: false });
@@ -217,7 +283,7 @@ async function startExperience() {
     const height = Math.max(1, view.clientHeight);
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    camera.fov = compact.matches ? 42 : 34;
+    camera.fov = desiredFov;
     camera.updateProjectionMatrix();
   };
   new ResizeObserver(resize).observe(view);
@@ -248,9 +314,14 @@ async function startExperience() {
     });
     const zoomed = desired.clone().addScaledVector(desired.clone().normalize(), zoom);
     camera.position.lerp(zoomed, ease);
+    focus.lerp(desiredFocus, ease);
+    camera.fov = THREE.MathUtils.lerp(camera.fov, desiredFov, ease);
+    camera.updateProjectionMatrix();
     camera.lookAt(focus);
     rim.intensity = 2.35 + Math.sin(time * .001) * .22;
     accentLight.position.z = Math.sin(time * .0005) * 3.5;
+    const headlightPhase = Math.max(0, 1 - Math.abs(scrollProgress - .66) / .12);
+    lightMaterials.forEach(material => { material.emissiveIntensity = .35 + headlightPhase * 2.4; });
     renderer.render(scene, camera);
   }
   requestAnimationFrame(render);
@@ -265,6 +336,7 @@ async function startExperience() {
     floor.geometry.dispose();
     floor.material.dispose();
     pmrem.dispose();
+    environmentTarget.dispose();
     renderer.dispose();
   }, { once: true });
 }

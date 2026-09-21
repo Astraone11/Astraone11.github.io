@@ -8,10 +8,11 @@
   <title>NITROVA — Experience Performance Beyond Limits</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2313263d'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='38' font-weight='bold' fill='white'%3EN%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css?v=6">
-  <link rel="stylesheet" href="luxury.css?v=6">
+  <link rel="stylesheet" href="luxury.css?v=8">
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
-  <script src="app.js?v=6" defer></script>
-  <script type="module" src="hero3d.js?v=6"></script>
+  <script src="app.js?v=7" defer></script>
+  <script src="cinematic.js?v=1" defer></script>
+  <script type="module" src="hero3d.js?v=7"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Lewati navigasi</a>
@@ -32,7 +33,7 @@
       <div class="hero-inner container">
         <div class="hero-copy">
           <p class="eyebrow"><span class="red-dot"></span> NITROVA / PERFORMANCE STUDIO <span class="eyebrow-line"></span> 001 / 015</p>
-          <h1 id="hero-title">NITROVA<span class="hero-subtitle">Built to move <em>you.</em></span></h1>
+          <h1 id="hero-title">NITROVA<span class="hero-subtitle">Engineered to be <em>felt.</em></span></h1>
           <p class="hero-tagline">Experience Performance Beyond Limits.</p>
           <p class="hero-description">Ikon performa dari setiap era, disajikan dalam pengalaman digital yang dirancang untuk dinikmati dari dekat.</p>
           <div class="hero-actions"><a class="button button-dark" href="#cars">Jelajahi koleksi <span aria-hidden="true">↗</span></a><a class="button button-outline" href="#showroom">Masuk showroom <span aria-hidden="true">↗</span></a></div>
@@ -46,9 +47,22 @@
           <div class="hero-reflection" aria-hidden="true"></div><span class="hero-vertical">VISION / 001</span>
           <div class="hero-caption"><span>FEATURED 3D VEHICLE</span><strong>PORSCHE 911 TURBO</strong></div>
           <div class="hero-3d-controls" aria-label="Kontrol kamera 3D"><button type="button" data-3d-camera="front">Front</button><button type="button" data-3d-camera="side">Side</button><button type="button" data-3d-camera="rear">Rear</button><button type="button" data-3d-camera="top">Top</button><button type="button" data-3d-camera="reset">Reset</button><button type="button" id="engineering-view" aria-pressed="false">Engineering</button></div>
-          <span class="hero-3d-hint">DRAG TO ORBIT · SCROLL TO ZOOM</span>
+          <span class="hero-3d-hint">DRAG TO ORBIT · SCROLL CONTROLS THE FILM</span>
         </div>
       </div>
+      <div class="story-ui" aria-live="polite">
+        <div class="story-card story-card-orbit" data-story="orbit"><span>03 / CAMERA ORBIT</span><h2>ENGINEERED<br>TO BE FELT.</h2><p>The camera moves. The Porsche holds the frame.</p></div>
+        <div class="story-card story-card-wheel" data-story="wheel"><span>04 / FRONT WHEEL</span><h2>PRECISION<br>IN MOTION.</h2><p>Every surface is shaped around response.</p></div>
+        <div class="story-card story-card-performance" data-story="performance"><span>06 / PERFORMANCE</span><h2>PERFORMANCE<br>WITHOUT COMPROMISE.</h2><div class="story-specs"><div><b>580</b><small>PS</small></div><div><b>2.8</b><small>SEC · 0–100 KM/H</small></div><div><b>320</b><small>KM/H</small></div></div></div>
+        <div class="story-card story-card-side" data-story="side"><span>07 / SIDE PROFILE</span><h2>SCULPTED<br>FOR SPEED.</h2><p>Porsche 911 Turbo / a silhouette that needs no introduction.</p></div>
+        <div class="story-card story-card-light" data-story="headlight"><span>08 / LIGHT</span><h2>FORM<br>FOLLOWS SPEED.</h2></div>
+        <div class="story-card story-card-detail" data-story="technical"><span>11 / TECHNICAL DETAILS</span><h2>DESIGNED<br>WITH PURPOSE.</h2><div class="technical-label technical-wheel"><i></i><b>PERFORMANCE WHEELS</b><small>Optimised grip and response</small></div><div class="technical-label technical-body"><i></i><b>AERODYNAMIC BODY</b><small>Controlled airflow</small></div><div class="technical-label technical-light"><i></i><b>LED LIGHT SIGNATURE</b><small>Focused visibility</small></div></div>
+        <div class="story-card story-card-final" data-story="final"><span>15 / NITROVA</span><h2>PORSCHE 911</h2><p>Experience Performance Beyond Limits.</p><a class="button button-dark" href="#cars">Explore the collection <span aria-hidden="true">↗</span></a></div>
+      </div>
+      <div class="wheel-transition" aria-hidden="true"></div>
+      <div class="headlight-transition" aria-hidden="true"></div>
+      <div class="story-film" aria-label="Cuplikan sinematik Porsche dalam gerak"><video id="porsche-film" autoplay muted loop playsinline preload="metadata"><source src="videos/porsche-drive.mp4" type="video/mp4"></video><div class="story-film-copy"><span>12 / THE DRIVE</span><strong>PERFORMANCE<br>IN MOTION.</strong></div></div>
+      <div class="story-rail" aria-hidden="true"><span id="story-number">01</span><i><b id="story-progress"></b></i><span>15</span></div>
       <div class="hero-bottom container"><span>SCROLL TO EXPLORE</span><span class="scroll-mark" aria-hidden="true">↓</span><span>ENGINEERED TO FEEL DIFFERENT</span></div>
     </div></section>
 
