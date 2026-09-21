@@ -104,6 +104,7 @@ function syncRoute(){
 function closeDetail(){if(location.hash.startsWith('#car/'))location.hash='#cars';else if(dialog.open)dialog.close()}
 
 $('featured-grid').innerHTML=cars.slice(0,3).map((car,index)=>card(car,index,true)).join('');
+$('porsche-grid').innerHTML=cars.filter(car=>car.brand==='Porsche').map((car,index)=>card(car,index)).join('');
 $('koenigsegg-grid').innerHTML=cars.filter(car=>car.brand==='Koenigsegg').map((car,index)=>card(car,index)).join('');
 $('bmw-grid').innerHTML=cars.filter(car=>car.brand==='BMW').map((car,index)=>card(car,index)).join('');
 $('arrivals-grid').innerHTML=cars.filter(car=>car.badge==='New').map((car,index)=>card(car,index)).join('');
@@ -112,7 +113,7 @@ $('model-list').innerHTML=cars.map((car,index)=>`<button type="button" data-mode
 $('filters').addEventListener('submit',event=>event.preventDefault());
 ['search','brand','category','body','power','speed','fuel','sort'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',renderCollection));
 $('collection-grid').addEventListener('click',event=>{const button=event.target.closest('[data-detail]');if(button)location.hash=`#car/${button.dataset.detail}`});
-['koenigsegg-grid','bmw-grid','arrivals-grid'].forEach(id=>$(id).addEventListener('click',event=>{const button=event.target.closest('[data-detail]');if(button)location.hash=`#car/${button.dataset.detail}`}));
+['porsche-grid','koenigsegg-grid','bmw-grid','arrivals-grid'].forEach(id=>$(id).addEventListener('click',event=>{const button=event.target.closest('[data-detail]');if(button)location.hash=`#car/${button.dataset.detail}`}));
 $('dialog-gallery').addEventListener('click',event=>{const button=event.target.closest('[data-gallery]');if(!button)return;$('dialog-image').src=`images/${button.dataset.gallery}`;$('dialog-gallery').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)))});
 $('model-list').addEventListener('click',event=>{const button=event.target.closest('[data-model]');if(button)selectCar(Number(button.dataset.model),true)});
 $('zoom-in').addEventListener('click',()=>{zoom=Math.min(1.65,Math.round((zoom+.1)*100)/100);applyStudioTransform()});
@@ -169,6 +170,15 @@ const cameraShots=[
   {image:'911-gt3-rs-4k.webp',alt:'Detail roda Porsche 911 GT3 RS',title:'WHEELS'},
   {image:'gt3-r-4k.webp',alt:'Detail sayap belakang Porsche 911 GT3 R',title:'REAR WING'}
 ];
+
+// Keep the hero usable if the external Three.js modules or WebGL cannot start.
+setTimeout(()=>{
+  const view=$('hero-3d-view');
+  if(view&&!view.classList.contains('is-3d-ready')){
+    view.classList.add('is-3d-failed');
+    $('hero-loader')?.remove();
+  }
+},20000);
 const cameraFrame=$('camera-frame'),cameraImage=$('camera-image');
 let currentShot=0,shotTimer,shotTransition,manualShot=false;
 function showShot(index,manual=false){

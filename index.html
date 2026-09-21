@@ -7,8 +7,10 @@
   <meta name="description" content="NITROVA — pengalaman otomotif sinematik dengan koleksi Porsche, Koenigsegg, dan BMW.">
   <title>NITROVA — Experience Performance Beyond Limits</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2313263d'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='38' font-weight='bold' fill='white'%3EN%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="style.css?v=4">
-  <script src="app.js?v=4" defer></script>
+  <link rel="stylesheet" href="style.css?v=5">
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+  <script src="app.js?v=5" defer></script>
+  <script type="module" src="hero3d.js?v=5"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Lewati navigasi</a>
@@ -16,13 +18,14 @@
     <a class="wordmark" href="#home" aria-label="NITROVA beranda"><span class="wordmark-symbol">N</span><span>NITROVA<small>PERFORMANCE STUDIO</small></span></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Buka menu"><span></span><span></span></button>
     <nav id="main-nav" aria-label="Navigasi utama">
-      <a href="#home">Beranda</a><a href="#cars">Koleksi</a><a href="#showroom">Showroom</a><a href="#about">Tentang</a>
+      <a href="#home">Beranda</a><a href="#cars">Koleksi</a><a href="#porsche">Porsche</a><a href="#koenigsegg">Koenigsegg</a><a href="#bmw">BMW</a><a href="#showroom">Showroom</a><a href="#about">Tentang</a>
       <a class="nav-account" href="https://nitrova-porsche.xboxsteam94.chatgpt.site/login">Akun <span aria-hidden="true">↗</span></a>
     </nav>
   </header>
 
   <main id="main">
-    <section class="hero" id="home" aria-labelledby="hero-title">
+    <section class="hero hero-3d" id="home" aria-labelledby="hero-title"><div class="hero-stage">
+      <video class="hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true"><source src="videos/precision-motion.mp4" type="video/mp4"></video>
       <div class="hero-grain" aria-hidden="true"></div><div class="hero-orbit orbit-one" aria-hidden="true"></div><div class="hero-orbit orbit-two" aria-hidden="true"></div><div class="speed-field" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <div class="hero-environment" aria-hidden="true"><div class="environment-light"></div><div class="environment-horizon"></div><div class="environment-track track-one"></div><div class="environment-track track-two"></div><div class="environment-fog"></div></div>
       <div class="hero-inner container">
@@ -33,16 +36,20 @@
           <p class="hero-description">Ikon performa dari setiap era, disajikan dalam pengalaman digital yang dirancang untuk dinikmati dari dekat.</p>
           <div class="hero-actions"><a class="button button-dark" href="#cars">Jelajahi koleksi <span aria-hidden="true">↗</span></a><a class="button button-outline" href="#showroom">Masuk showroom <span aria-hidden="true">↗</span></a></div>
         </div>
-        <div class="hero-visual" aria-label="Porsche Mission X dalam studio digital">
+        <div class="hero-visual" id="hero-3d-view" aria-label="Porsche 911 Turbo interaktif dalam studio 3D">
           <div class="hero-light" aria-hidden="true"></div><div class="hero-floor" aria-hidden="true"></div>
-          <img class="hero-car" src="images/mission-x-4k.webp" alt="Porsche Mission X, tampak tiga perempat depan" fetchpriority="high">
+          <img class="hero-car hero-fallback" id="hero-fallback" src="images/mission-x-4k.webp" alt="Porsche Mission X sebagai tampilan cadangan" fetchpriority="high">
+          <canvas id="hero-canvas" aria-label="Model 3D Porsche 911 Turbo. Geser untuk memutar dan gulir di atas mobil untuk memperbesar."></canvas>
+          <div class="hero-loader" id="hero-loader" role="status" aria-live="polite"><span>NITROVA</span><strong>LOADING PERFORMANCE</strong><b id="hero-load-progress">0%</b><i><span id="hero-load-bar"></span></i></div>
           <div class="hero-paint-light" aria-hidden="true"></div><div class="hero-road-blur" aria-hidden="true"></div>
           <div class="hero-reflection" aria-hidden="true"></div><span class="hero-vertical">VISION / 001</span>
-          <div class="hero-caption"><span>FEATURED CONCEPT</span><strong>PORSCHE MISSION X</strong></div>
+          <div class="hero-caption"><span>FEATURED 3D VEHICLE</span><strong>PORSCHE 911 TURBO</strong></div>
+          <div class="hero-3d-controls" aria-label="Kontrol kamera 3D"><button type="button" data-3d-camera="front">Front</button><button type="button" data-3d-camera="side">Side</button><button type="button" data-3d-camera="rear">Rear</button><button type="button" data-3d-camera="top">Top</button><button type="button" data-3d-camera="reset">Reset</button><button type="button" id="engineering-view" aria-pressed="false">Engineering</button></div>
+          <span class="hero-3d-hint">DRAG TO ORBIT · SCROLL TO ZOOM</span>
         </div>
       </div>
       <div class="hero-bottom container"><span>SCROLL TO EXPLORE</span><span class="scroll-mark" aria-hidden="true">↓</span><span>ENGINEERED TO FEEL DIFFERENT</span></div>
-    </section>
+    </div></section>
 
     <section class="cinematic" id="experience" aria-label="Pengalaman performa sinematik"><div class="cinematic-pin"><div class="cinematic-glow"></div><div class="cinematic-streaks" aria-hidden="true"><i></i><i></i><i></i></div><img class="cinematic-car" src="images/911-gt3-rs-4k.webp" alt="Porsche 911 GT3 RS" loading="lazy"><div class="cinematic-copy"><p class="eyebrow">NITROVA / THE DRIVE</p><h2 id="cinematic-title">Engineered for <em>Performance.</em></h2><p id="cinematic-desc">Setiap garis dirancang untuk bergerak.</p><div class="cinematic-stats" id="cinematic-stats"><span><b data-count="6">0</b><small>PORSCHE PILIHAN</small></span><span><b data-count="15">0</b><small>MOBIL DALAM KOLEKSI</small></span><span><b data-count="3">0</b><small>IKON OTOMOTIF</small></span></div></div><span class="cinematic-progress">01 / 04</span></div></section>
 
@@ -55,8 +62,10 @@
       <div class="featured-grid" id="featured-grid"></div>
     </div></section>
 
+    <section class="section brand-section porsche-section" id="porsche" aria-labelledby="porsche-title"><div class="container"><div class="section-heading reveal"><p class="eyebrow">02 / PORSCHE PERFORMANCE</p><div class="heading-row"><h2 id="porsche-title">Porsche <em>in focus.</em></h2><a class="text-link" href="#home">Buka Porsche 911 3D ↗</a></div><p>Porsche 911 Turbo menjadi kendaraan 3D utama. Putar model, ubah sudut kamera, zoom, atau pisahkan roda melalui Engineering View.</p></div><div class="collection-grid" id="porsche-grid"></div></div></section>
+
     <section class="section studio-section" id="showroom" aria-labelledby="studio-title"><div class="container">
-      <div class="section-heading reveal"><p class="eyebrow">02 / INTERACTIVE STUDIO</p><div class="heading-row"><h2 id="studio-title">Closer to <em>the drive.</em></h2><p>Geser mobil, perbesar detail, dan ganti model. Gambar studio dari koleksi asli.</p></div></div>
+      <div class="section-heading reveal"><p class="eyebrow">03 / INTERACTIVE STUDIO</p><div class="heading-row"><h2 id="studio-title">Closer to <em>the drive.</em></h2><p>Geser mobil, perbesar detail, dan ganti model. Gambar studio dari koleksi asli.</p></div></div>
       <div class="studio-shell reveal" id="studio-shell">
         <div class="studio-stage" id="studio-stage" tabindex="0" aria-label="Studio interaktif. Seret untuk menggeser gambar mobil.">
           <div class="studio-glow"></div><div class="studio-ring"></div><div class="studio-floor"></div>
@@ -73,20 +82,20 @@
     </div></section>
 
     <section class="section collection-section" id="cars" aria-labelledby="collection-title"><div class="container">
-      <div class="section-heading reveal"><p class="eyebrow">03 / THE COLLECTION</p><div class="heading-row"><h2 id="collection-title">The performance <em>edit.</em></h2><p>Porsche, Koenigsegg, dan BMW. Setiap foto menampilkan mobil yang sesuai dengan namanya.</p></div></div>
+      <div class="section-heading reveal"><p class="eyebrow">04 / THE COLLECTION</p><div class="heading-row"><h2 id="collection-title">The performance <em>edit.</em></h2><p>Porsche, Koenigsegg, dan BMW. Setiap foto menampilkan mobil yang sesuai dengan namanya.</p></div></div>
       <form class="filters" id="filters" role="search"><label><span>CARI MOBIL</span><input id="search" type="search" placeholder="Cari model, merek, sedan, hypercar…" autocomplete="off"></label><label><span>MEREK</span><select id="brand"><option value="all">Semua merek</option><option>Porsche</option><option>Koenigsegg</option><option>BMW</option></select></label><label><span>KATEGORI</span><select id="category"><option value="all">Semua kategori</option><option>Concept</option><option>Sports</option><option>Track</option><option>Hypercar</option><option>Sedan</option><option>Coupe</option><option>Race car</option></select></label><label><span>BODI</span><select id="body"><option value="all">Semua bodi</option><option>Coupe</option><option>Sedan</option><option>Race car</option></select></label><label><span>DAYA</span><select id="power"><option value="all">Semua daya</option><option value="500">500+ HP</option><option value="600">600+ HP</option><option value="1000">1000+ HP</option></select></label><label><span>KECEPATAN</span><select id="speed"><option value="all">Semua kecepatan</option><option value="250">250+ km/h</option><option value="300">300+ km/h</option></select></label><label><span>BAHAN BAKAR</span><select id="fuel"><option value="all">Semua tipe</option><option value="Petrol">Bensin</option><option value="Electric">Listrik</option></select></label><label><span>URUTKAN</span><select id="sort"><option value="featured">Pilihan utama</option><option value="name">Nama A–Z</option><option value="name-desc">Nama Z–A</option><option value="power">Daya tertinggi</option><option value="speed">Tercepat</option></select></label></form>
       <div class="collection-meta"><span id="result-count">15 model</span><span>THREE BRANDS / ONE DRIVE</span></div><div class="collection-grid" id="collection-grid"></div>
     </div></section>
 
-    <section class="section brand-section" id="koenigsegg" aria-labelledby="koenigsegg-title"><div class="container"><div class="section-heading reveal"><p class="eyebrow">04 / SWEDISH HYPERCARS</p><div class="heading-row"><h2 id="koenigsegg-title">Koenigsegg <em>collection.</em></h2><a class="text-link" href="#cars">Filter katalog ↗</a></div><p>Empat perspektif dari koleksi gambar yang Anda berikan.</p></div><div class="collection-grid" id="koenigsegg-grid"></div></div></section>
-    <section class="section brand-section brand-section-light" id="bmw" aria-labelledby="bmw-title"><div class="container"><div class="section-heading reveal"><p class="eyebrow">05 / M PERFORMANCE</p><div class="heading-row"><h2 id="bmw-title">BMW <em>collection.</em></h2><a class="text-link" href="#cars">Filter katalog ↗</a></div><p>Coupe, sedan, listrik, dan motorsport dalam satu koleksi.</p></div><div class="collection-grid" id="bmw-grid"></div></div></section>
-    <section class="section garage-section" id="garage"><div class="container"><div class="section-heading reveal"><p class="eyebrow">06 / PERFORMANCE GARAGE</p><h2>Beyond <em>limits.</em></h2><p>Jelajahi pilihan performa dari setiap merek.</p></div><div class="garage-grid" id="garage-grid"></div></div></section>
-    <section class="section arrivals-section" id="arrivals"><div class="container"><div class="section-heading reveal"><p class="eyebrow">07 / NEW ARRIVALS</p><h2>Fresh in <em>focus.</em></h2></div><div class="collection-grid" id="arrivals-grid"></div></div></section>
+    <section class="section brand-section" id="koenigsegg" aria-labelledby="koenigsegg-title"><div class="container"><div class="section-heading reveal"><p class="eyebrow">05 / SWEDISH HYPERCARS</p><div class="heading-row"><h2 id="koenigsegg-title">Koenigsegg <em>collection.</em></h2><a class="text-link" href="#cars">Filter katalog ↗</a></div><p>Empat perspektif dari koleksi gambar yang Anda berikan.</p></div><div class="collection-grid" id="koenigsegg-grid"></div></div></section>
+    <section class="section brand-section brand-section-light" id="bmw" aria-labelledby="bmw-title"><div class="container"><div class="section-heading reveal"><p class="eyebrow">06 / M PERFORMANCE</p><div class="heading-row"><h2 id="bmw-title">BMW <em>collection.</em></h2><a class="text-link" href="#cars">Filter katalog ↗</a></div><p>Coupe, sedan, listrik, dan motorsport dalam satu koleksi.</p></div><div class="brand-film reveal"><video autoplay muted loop playsinline preload="metadata" poster="images/bmw-m4.webp"><source src="videos/bmw-night-run.mp4" type="video/mp4"></video><div><span>BMW / NIGHT RUN</span><strong>Precision in motion.</strong><p>Visual bergerak dipadukan dengan katalog untuk menghadirkan atmosfer performa tanpa mengganggu navigasi.</p></div></div><div class="collection-grid" id="bmw-grid"></div></div></section>
+    <section class="section garage-section" id="garage"><div class="container"><div class="section-heading reveal"><p class="eyebrow">07 / PERFORMANCE GARAGE</p><h2>Beyond <em>limits.</em></h2><p>Jelajahi pilihan performa dari setiap merek.</p></div><div class="garage-grid" id="garage-grid"></div></div></section>
+    <section class="section arrivals-section" id="arrivals"><div class="container"><div class="section-heading reveal"><p class="eyebrow">08 / NEW ARRIVALS</p><h2>Fresh in <em>focus.</em></h2></div><div class="collection-grid" id="arrivals-grid"></div></div></section>
 
-    <section class="about-section" id="about"><div class="container about-inner reveal"><div><p class="eyebrow">08 / ABOUT NITROVA</p><h2>More than speed.<br><em>A feeling.</em></h2></div><div><p>NITROVA adalah ruang digital untuk menikmati desain dan karakter Porsche, Koenigsegg, dan BMW. Buka koleksi, cari model yang kamu suka, lalu jelajahi tampilannya di studio interaktif.</p><a class="button button-light" href="#showroom">Jelajahi studio <span aria-hidden="true">↗</span></a></div></div></section>
+    <section class="about-section" id="about"><div class="container about-inner reveal"><div><p class="eyebrow">09 / ABOUT NITROVA</p><h2>More than speed.<br><em>A feeling.</em></h2></div><div><p>NITROVA adalah ruang digital untuk menikmati desain dan karakter Porsche, Koenigsegg, dan BMW. Buka koleksi, cari model yang kamu suka, lalu jelajahi tampilannya di studio interaktif.</p><a class="button button-light" href="#showroom">Jelajahi studio <span aria-hidden="true">↗</span></a></div></div></section>
   </main>
 
-  <footer class="footer"><div class="container footer-grid"><div><a class="wordmark footer-brand" href="#home"><span class="wordmark-symbol">N</span><span>NITROVA<small>PERFORMANCE STUDIO</small></span></a><p>Experience Performance Beyond Limits.</p></div><div><span>EXPLORE</span><a href="#home">Beranda</a><a href="#cars">Koleksi</a><a href="#koenigsegg">Koenigsegg</a><a href="#bmw">BMW</a><a href="#showroom">Showroom</a></div><div><span>ACCOUNT</span><a href="https://nitrova-porsche.xboxsteam94.chatgpt.site/login">Masuk ↗</a><a href="https://nitrova-porsche.xboxsteam94.chatgpt.site/signup">Daftar ↗</a><a href="https://nitrova-porsche.xboxsteam94.chatgpt.site/profile">Profil & favorit ↗</a></div><div class="footer-contact"><span>DEVELOPER</span><a href="mailto:xboxsteam94@gmail.com">Developed by xboxsteam94@gmail.com</a><a href="tel:085177085923">Phone: 085177085923</a></div></div><div class="container footer-bottom"><span>© <span id="year"></span> NITROVA</span><span>Independent automotive enthusiast experience.</span></div></footer>
+  <footer class="footer"><div class="container footer-grid"><div><a class="wordmark footer-brand" href="#home"><span class="wordmark-symbol">N</span><span>NITROVA<small>PERFORMANCE STUDIO</small></span></a><p>Experience Performance Beyond Limits.</p></div><div><span>EXPLORE</span><a href="#home">Beranda</a><a href="#cars">Koleksi</a><a href="#porsche">Porsche</a><a href="#koenigsegg">Koenigsegg</a><a href="#bmw">BMW</a><a href="#showroom">Showroom</a></div><div><span>ACCOUNT</span><a href="https://nitrova-porsche.xboxsteam94.chatgpt.site/login">Masuk ↗</a><a href="https://nitrova-porsche.xboxsteam94.chatgpt.site/signup">Daftar ↗</a><a href="https://nitrova-porsche.xboxsteam94.chatgpt.site/profile">Profil & favorit ↗</a></div><div class="footer-contact"><span>DEVELOPER</span><a href="mailto:xboxsteam94@gmail.com">Developed by xboxsteam94@gmail.com</a><a href="tel:085177085923">Phone: 085177085923</a></div></div><div class="container footer-bottom"><span>© <span id="year"></span> NITROVA</span><span>Independent automotive enthusiast experience.</span></div></footer>
 
   <dialog id="car-dialog" class="car-dialog" aria-labelledby="dialog-title"><div class="dialog-wrap"><button type="button" class="dialog-close" id="dialog-close" aria-label="Tutup detail">×</button><div class="dialog-media"><img id="dialog-image" alt=""><div id="dialog-gallery" class="dialog-gallery" aria-label="Galeri mobil"></div></div><div class="dialog-body"><p class="eyebrow" id="dialog-brand">COLLECTION</p><h2 id="dialog-title"></h2><p id="dialog-desc"></p><div class="dialog-facts"><span id="dialog-category"></span><span id="dialog-era"></span></div><dl class="spec-grid" id="dialog-specs"></dl><div class="dialog-actions"><a class="button button-dark" id="dialog-account" href="https://nitrova-porsche.xboxsteam94.chatgpt.site/login">Masuk untuk favorit <span aria-hidden="true">↗</span></a><a class="button button-outline" id="dialog-contact" href="mailto:xboxsteam94@gmail.com">Tanya mobil ↗</a><button type="button" class="button button-outline" id="dialog-back">Kembali</button></div><small>Favorit Porsche dibuka melalui situs akun NITROVA. Ketersediaan spesifikasi tergantung model dan varian.</small></div></div></dialog>
 </body>
