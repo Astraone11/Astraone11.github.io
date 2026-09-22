@@ -148,28 +148,22 @@ const cameraShots=[
 ];
 
 const cameraFrame=$('camera-frame'),cameraImage=$('camera-image');
-let currentShot=0,shotTimer,shotTransition,manualShot=false;
+let currentShot=0;
 function showShot(index,manual=false){
-  if(index===currentShot&&manual)return;
-  if(manual){manualShot=true;clearInterval(shotTimer)}
+  index=Math.max(0,Math.min(cameraShots.length-1,index));
   currentShot=index;
   const shot=cameraShots[index];
-  clearTimeout(shotTransition);
-  cameraFrame.classList.add('changing');
-  shotTransition=setTimeout(()=>{
-    cameraFrame.dataset.shot=String(index);
-    cameraImage.src=`images/${shot.image}`;
-    cameraImage.alt=shot.alt;
-    $('camera-frame-index').textContent=`0${index+1} / 04`;
-    $('camera-frame-title').textContent=shot.title;
-    $('camera-rail').querySelectorAll('button').forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));
-    requestAnimationFrame(()=>cameraFrame.classList.remove('changing'));
-  },reducedMotion.matches?0:220);
+  cameraFrame.dataset.shot=String(index);
+  cameraFrame.querySelectorAll('[data-gallery-layer]').forEach((layer,i)=>{
+    layer.classList.toggle('active',i===index);
+    layer.setAttribute('aria-hidden',String(i!==index));
+  });
+  cameraImage.alt=cameraShots[0].alt;
+  $('camera-frame-index').textContent=`0${index+1} / 04`;
+  $('camera-frame-title').textContent=shot.title;
+  $('camera-rail').querySelectorAll('button').forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));
+  if(manual)window.dispatchEvent(new CustomEvent('nitrova:gallery-select',{detail:{index}}));
 }
+window.NitrovaGallery={select:showShot,get index(){return currentShot}};
 $('camera-rail').addEventListener('click',event=>{const button=event.target.closest('[data-shot]');if(button)showShot(Number(button.dataset.shot),true)});
-const cameraObserver=new IntersectionObserver(entries=>{
-  const visible=entries.some(entry=>entry.isIntersecting);
-  clearInterval(shotTimer);
-  if(visible&&!manualShot&&!reducedMotion.matches)shotTimer=setInterval(()=>showShot((currentShot+1)%cameraShots.length),5200);
-},{threshold:.2});
-cameraObserver.observe($('gallery'));
+showShot(0);
