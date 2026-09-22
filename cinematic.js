@@ -96,18 +96,18 @@
       .to('.performance-stats', { y: -35, opacity: 0, duration: .2 }, .78)
       .to('.performance-pin video', { scale: 1.08, opacity: .45, duration: .2 }, .8);
 
-    gsap.set('.parallax-car', { yPercent: -50 });
+    gsap.set('.parallax-car', { xPercent: isDesktop ? 0 : -50, yPercent: -50 });
     gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.parallax-scene', start: 'top bottom', end: 'bottom top', scrub } })
       .fromTo('.parallax-bg', { yPercent: -5, scale: 1.06 }, { yPercent: 7, scale: 1 }, 0)
       .fromTo('.parallax-word', { xPercent: 6, y: 80 }, { xPercent: -8, y: -95 }, 0)
-      .fromTo('.parallax-car', { xPercent: isDesktop ? -4 : -2, y: 40, scale: 1.1 }, { xPercent: isDesktop ? 5 : 2, y: -75, scale: 1.02 }, 0)
+      .fromTo('.parallax-car', { xPercent: isDesktop ? -4 : -52, y: isDesktop ? 40 : 12, scale: isDesktop ? 1.1 : 1.02 }, { xPercent: isDesktop ? 5 : -48, y: isDesktop ? -75 : -22, scale: isDesktop ? 1.02 : 1 }, 0)
       .fromTo('.parallax-copy', { y: 100, clipPath: 'inset(0 0 100% 0)' }, { y: -70, clipPath: 'inset(0 0 0% 0)' }, .08)
       .fromTo('.parallax-foreground', { y: -40 }, { y: 105 }, 0);
 
     gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.design-story', start: 'top top', end: 'bottom bottom', scrub } })
       .fromTo('.design-intro h2', { y: 80, clipPath: 'inset(0 0 100% 0)' }, { y: 0, clipPath: 'inset(0 0 0% 0)', duration: .28 }, 0)
       .fromTo('.design-image', { clipPath: 'inset(18% 14% 18% 14%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: .52 }, .12)
-      .fromTo('.design-image img', { xPercent: -8, yPercent: -4, scale: 1.16 }, { xPercent: -8, yPercent: 3, scale: 1.03, duration: .76 }, .1)
+      .fromTo('.design-image img', { xPercent: isDesktop ? -8 : 0, yPercent: isDesktop ? -4 : 0, scale: isDesktop ? 1.16 : 1.05 }, { xPercent: isDesktop ? -8 : 0, yPercent: isDesktop ? 3 : 0, scale: isDesktop ? 1.03 : 1, duration: .76 }, .1)
       .fromTo('.design-notes article', { x: isDesktop ? 70 : 24, opacity: 0 }, { x: 0, opacity: 1, stagger: .08, duration: .22 }, .28);
 
     gsap.set('.color-story > img', { xPercent: -50, yPercent: -50 });
@@ -138,7 +138,11 @@
       trigger: '.camera-gallery', start: 'top top', end: 'bottom bottom', scrub,
       onUpdate(self) {
         const index = Math.min(3, Math.floor(self.progress * 4));
-        if (index !== galleryIndex) { galleryIndex = index; window.NitrovaGallery?.select(index); }
+        if (index !== galleryIndex) {
+          galleryIndex = index;
+          window.NitrovaGallery?.select(index);
+          if (!isDesktop) galleryLayers.forEach((layer, i) => { layer.style.visibility = Math.abs(i - index) <= 1 ? 'visible' : 'hidden'; });
+        }
       }
     }});
     galleryLayers.slice(1).forEach((layer, index) => {
