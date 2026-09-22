@@ -25,7 +25,8 @@ const safeText = text => text.replaceAll('&','&amp;').replaceAll('<','&lt;').rep
 
 function card(car,index,featured=false){
   if(featured)return `<article class="feature-card reveal"><div class="feature-media"><span class="feature-number">0${index+1} / 03</span><img src="${image(car)}" alt="${safeText(car.brand+' '+car.model)}" loading="lazy"></div><div class="feature-info"><p>${safeText(car.era)}</p><h3>${safeText(car.model)}</h3><a href="#car/${car.slug}" aria-label="Lihat detail ${safeText(car.brand+' '+car.model)}">Lihat detail <span aria-hidden="true">↗</span></a></div></article>`;
-  return `<article class="car-card reveal"><div class="car-media"><span class="car-badge">${safeText(car.badge)}</span><img src="${image(car)}" alt="${safeText(car.brand+' '+car.model)}" loading="lazy"></div><div class="car-info"><p>${safeText(car.brand)} / ${safeText(car.category)}</p><h3>${safeText(car.model)}</h3><span>${safeText(car.tagline)}</span><div class="card-specs"><span>${car.power?car.power+' HP':'— HP'}</span><span>${car.topSpeed?car.topSpeed+' km/h':'— km/h'}</span><span>${car.accel?car.accel+' s':'— s'}</span></div><button type="button" data-detail="${car.slug}" aria-label="Lihat detail ${safeText(car.brand+' '+car.model)}">Lihat detail ↗</button></div></article>`;
+  const specs=[[car.power,car.power+' HP'],[car.topSpeed,car.topSpeed+' km/h'],[car.accel,car.accel+' s']].filter(([value])=>value).map(([,label])=>`<span>${label}</span>`).join('');
+  return `<article class="car-card reveal"><div class="car-media"><span class="car-badge">${safeText(car.badge)}</span><img src="${image(car)}" alt="${safeText(car.brand+' '+car.model)}" loading="lazy"></div><div class="car-info"><p>${safeText(car.brand)} / ${safeText(car.category)}</p><h3>${safeText(car.model)}</h3><span>${safeText(car.tagline)}</span>${specs?`<div class="card-specs">${specs}</div>`:''}<button type="button" data-detail="${car.slug}" aria-label="Lihat detail ${safeText(car.brand+' '+car.model)}">Lihat detail ↗</button></div></article>`;
 }
 
 function revealNew(){
@@ -94,7 +95,7 @@ function syncRoute(){
   $('dialog-brand').textContent=`${car.brand.toUpperCase()} / COLLECTION`;
   $('dialog-category').textContent=car.category.toUpperCase();
   $('dialog-era').textContent=car.era;
-  $('dialog-specs').innerHTML=[['Power',car.power?car.power+' HP':'Belum diverifikasi'],['Top Speed',car.topSpeed?car.topSpeed+' km/h':'Belum diverifikasi'],['0–100 km/h',car.accel?car.accel+' s':'Belum diverifikasi'],['Engine / Motor',car.engine],['Transmission',car.transmission],['Drivetrain',car.drivetrain]].map(([key,value])=>`<div><dt>${safeText(key)}</dt><dd>${safeText(value)}</dd></div>`).join('');
+  $('dialog-specs').innerHTML=[['Power',car.power&&car.power+' HP'],['Top Speed',car.topSpeed&&car.topSpeed+' km/h'],['0–100 km/h',car.accel&&car.accel+' s'],['Engine / Motor',car.engine&&!car.engine.startsWith('Belum')&&car.engine],['Transmission',car.transmission&&!car.transmission.startsWith('Belum')&&car.transmission],['Drivetrain',car.drivetrain&&!car.drivetrain.startsWith('Belum')&&car.drivetrain]].filter(([,value])=>value&&value!=='Lihat varian').map(([key,value])=>`<div><dt>${safeText(key)}</dt><dd>${safeText(String(value))}</dd></div>`).join('');
   $('dialog-gallery').innerHTML=car.gallery.map((src,index)=>`<button type="button" data-gallery="${src}" aria-label="Lihat foto ${index+1} ${safeText(car.model)}" aria-pressed="${index===0}"><img src="images/${src}" alt="" loading="lazy"></button>`).join('');
   $('dialog-account').href=accountBase+(car.account||'/login');
   $('dialog-account').innerHTML=car.account?'Buka favorit di situs akun <span aria-hidden="true">↗</span>':'Masuk ke situs akun <span aria-hidden="true">↗</span>';
@@ -139,31 +140,6 @@ $('year').textContent=new Date().getFullYear();
 renderCollection();revealNew();setAuto(!matchMedia('(prefers-reduced-motion: reduce)').matches);syncRoute();
 
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-const cinematic=$('experience');
-const scenes=[
-  ['Engineered for <em>Performance.</em>','Setiap garis dirancang untuk bergerak.'],
-  ['Designed for <em>Speed.</em>','Cahaya, bentuk, dan gerak berpadu.'],
-  ['PRECISION. <em>BEYOND LIMITS.</em>','Sorotan pada lampu, roda, dan garis aerodinamis.'],
-  ['PERFORMANCE <em>IN FOCUS.</em>','Tiga merek. Lima belas perspektif performa.']
-];
-let sceneIndex=-1,rafPending=false,countersStarted=false;
-function updateCinema(){
-  rafPending=false;
-  const rect=cinematic.getBoundingClientRect();
-  const progress=Math.max(0,Math.min(1,-rect.top/Math.max(1,rect.height-innerHeight)));
-  cinematic.style.setProperty('--scene-progress',progress.toFixed(3));
-  const next=Math.min(3,Math.floor(progress*4));
-  if(next!==sceneIndex){sceneIndex=next;$('cinematic-title').innerHTML=scenes[next][0];$('cinematic-desc').textContent=scenes[next][1];cinematic.querySelector('.cinematic-progress').textContent=`0${next+1} / 04`;cinematic.classList.toggle('final-scene',next===3)}
-  if(next===3&&!countersStarted){countersStarted=true;cinematic.querySelectorAll('[data-count]').forEach(el=>{const target=Number(el.dataset.count);if(reducedMotion.matches){el.textContent=target;return}let start;function tick(now){start??=now;el.textContent=Math.round(target*Math.min(1,(now-start)/1000));if(now-start<1000)requestAnimationFrame(tick)}requestAnimationFrame(tick)})}
-}
-function scheduleCinema(){if(!rafPending){rafPending=true;requestAnimationFrame(updateCinema)}}
-addEventListener('scroll',scheduleCinema,{passive:true});addEventListener('resize',scheduleCinema);scheduleCinema();
-if(!reducedMotion.matches&&matchMedia('(pointer:fine)').matches){
-  const hero=document.querySelector('.hero');let pointerFrame=false,px=0,py=0;
-  hero.addEventListener('pointermove',event=>{px=(event.clientX/innerWidth-.5)*12;py=(event.clientY/innerHeight-.5)*9;if(!pointerFrame){pointerFrame=true;requestAnimationFrame(()=>{hero.style.setProperty('--pointer-x',px+'px');hero.style.setProperty('--pointer-y',py+'px');pointerFrame=false})}});
-  hero.addEventListener('pointerleave',()=>{hero.style.setProperty('--pointer-x','0px');hero.style.setProperty('--pointer-y','0px')});
-}
-
 const cameraShots=[
   {image:'mission-x-4k.webp',alt:'Porsche Mission X, tampak tiga perempat depan',title:'FRONT QUARTER'},
   {image:'mission-x-4k.webp',alt:'Detail lampu depan Porsche Mission X',title:'HEADLIGHTS'},
@@ -171,14 +147,6 @@ const cameraShots=[
   {image:'gt3-r-4k.webp',alt:'Detail sayap belakang Porsche 911 GT3 R',title:'REAR WING'}
 ];
 
-// Keep the hero usable if the external Three.js modules or WebGL cannot start.
-setTimeout(()=>{
-  const view=$('hero-3d-view');
-  if(view&&!view.classList.contains('is-3d-ready')){
-    view.classList.add('is-3d-failed');
-    $('hero-loader')?.remove();
-  }
-},20000);
 const cameraFrame=$('camera-frame'),cameraImage=$('camera-image');
 let currentShot=0,shotTimer,shotTransition,manualShot=false;
 function showShot(index,manual=false){
@@ -204,4 +172,4 @@ const cameraObserver=new IntersectionObserver(entries=>{
   clearInterval(shotTimer);
   if(visible&&!manualShot&&!reducedMotion.matches)shotTimer=setInterval(()=>showShot((currentShot+1)%cameraShots.length),5200);
 },{threshold:.2});
-cameraObserver.observe($('camera-gallery'));
+cameraObserver.observe($('gallery'));
