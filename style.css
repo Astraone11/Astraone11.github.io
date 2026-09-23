@@ -40,12 +40,13 @@
 
 /* Responsive automotive film: restrained visual stages and native touch scrolling. */
 html{scroll-padding-top:72px}body{width:100%;overflow-x:clip}.camera-gallery-shell,.design-spread,.design-image{min-width:0}.gallery-layers img{display:block;width:100%;height:100%}.drive-film .drive-pin video,.performance-pin video{object-position:50% 50%}
+.design-story{overflow:clip}.hero-copy{top:17svh;bottom:auto}.hero-copy>p{font-size:clamp(38px,5vw,76px)}
 .site-header:has(#main-nav.open){background:#f4f1eb!important;color:#111!important}.site-header:has(#main-nav.open) .wordmark{color:#111!important}
 @media(max-width:767px){
   .site-header{height:62px}.menu-toggle{position:relative;z-index:2;min-width:44px;min-height:44px}
   #main-nav{position:fixed;top:62px;left:0;right:0;width:100%;max-height:calc(100svh - 62px);overflow-y:auto;padding:14px 24px 32px;box-shadow:0 18px 30px #0002;border-top:1px solid #1112}
   #main-nav a{font-size:14px;min-height:48px;display:flex;align-items:center}
-  .hero{height:155svh;min-height:820px}.hero-pin{min-height:0}.hero-car{width:min(105vw,620px);max-width:none;top:48%;object-fit:contain}.hero-word{top:39%;font-size:clamp(5.8rem,27vw,10rem)}.hero-copy{bottom:12%;max-width:calc(100% - 36px)}.hero-copy>p{font-size:clamp(41px,12vw,64px)}.hero-kicker{top:13%}
+  .hero{height:155svh;min-height:820px}.hero-pin{min-height:0}.hero-car{width:min(105vw,620px);max-width:none;top:48%;object-fit:contain}.hero-word{top:39%;font-size:clamp(5.8rem,27vw,10rem)}.hero-copy{top:auto;bottom:12%;max-width:calc(100% - 36px)}.hero-copy>p{font-size:clamp(41px,12vw,64px)}.hero-kicker{top:13%}
   .performance-story{height:175svh}.performance-title{left:18px;right:18px;top:16svh}.performance-title h2{font-size:clamp(47px,15vw,76px)}.performance-stats{bottom:7svh;gap:8px}.performance-stats b{font-size:clamp(33px,10vw,46px)}.performance-pin video{inset:0;width:100%;height:100%;filter:none;object-position:50% 50%}
   .parallax-scene{height:100svh;min-height:600px;max-height:880px}.parallax-copy{top:12%;left:18px;right:18px;z-index:4;max-width:calc(100% - 36px)}.parallax-copy h2{font-size:clamp(42px,13vw,66px);line-height:.88;overflow-wrap:normal}.parallax-copy p{max-width:275px}.parallax-word{font-size:31vw;top:49%;left:0}.parallax-car{width:min(100%,620px);max-width:none;left:50%;top:66%;height:45%;object-fit:contain;filter:drop-shadow(0 15px 14px #0003);transform:translate3d(-50%,-50%,0)}.parallax-foreground{height:18%;bottom:-8%;filter:none;opacity:.35}
   .design-story{padding:85px 0}.design-intro h2{font-size:clamp(43px,13vw,68px);line-height:.88}.design-intro p{font-size:13px}.design-spread{margin-top:32px;gap:14px}.design-image{width:100%;height:auto;aspect-ratio:4/3;max-height:58svh}.design-image img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;transform:none}.design-notes article{padding:14px 0}.design-notes p{font-size:11px;margin:5px 0 0}
