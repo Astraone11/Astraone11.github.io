@@ -134,8 +134,17 @@ $('dialog-close').addEventListener('click',closeDetail);
 $('dialog-back').addEventListener('click',closeDetail);
 dialog.addEventListener('close',()=>{if(location.hash.startsWith('#car/'))location.hash='#cars'});
 const menu=document.querySelector('.menu-toggle');
-menu.addEventListener('click',()=>{const opened=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(opened));$('main-nav').classList.toggle('open',opened)});
-$('main-nav').addEventListener('click',event=>{if(event.target.closest('a')){menu.setAttribute('aria-expanded','false');$('main-nav').classList.remove('open')}});
+function setMenu(opened){
+  menu.setAttribute('aria-expanded',String(opened));
+  menu.setAttribute('aria-label',opened?'Tutup menu':'Buka menu');
+  $('main-nav').classList.toggle('open',opened);
+}
+menu.addEventListener('click',()=>setMenu(menu.getAttribute('aria-expanded')!=='true'));
+$('main-nav').addEventListener('click',event=>{if(event.target.closest('a'))setMenu(false)});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&menu.getAttribute('aria-expanded')==='true'){setMenu(false);menu.focus()}});
+document.addEventListener('click',event=>{if(!event.target.closest('.site-header'))setMenu(false)});
+document.querySelector('.site-header').addEventListener('focusout',event=>{if(event.relatedTarget&&!event.relatedTarget.closest('.site-header'))setMenu(false)});
+matchMedia('(min-width: 1024px)').addEventListener('change',()=>setMenu(false));
 $('year').textContent=new Date().getFullYear();
 renderCollection();revealNew();setAuto(!matchMedia('(prefers-reduced-motion: reduce)').matches);syncRoute();
 

@@ -1,178 +1,231 @@
 (() => {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const desktop = matchMedia('(min-width: 1024px) and (pointer: fine)');
+  const compact = matchMedia('(max-width: 1023px)');
   const header = document.querySelector('.site-header');
-  const loader = document.querySelector('.page-loader');
   const heroImage = document.querySelector('.hero-car');
+  const loader = document.querySelector('.page-loader');
   const darkSections = [...document.querySelectorAll('.performance-story,.engineering-story,.drive-film,.camera-gallery,.final-scene')];
   let lenis;
 
   const finishLoading = () => {
     if (!loader || loader.classList.contains('loaded')) return;
-    const bar = loader.querySelector('b');
-    const output = loader.querySelector('output');
-    bar.style.transform = 'scaleX(1)';
-    output.value = '100';
-    setTimeout(() => loader.classList.add('loaded'), reduced.matches ? 0 : 260);
+    loader.querySelector('b').style.transform = 'scaleX(1)';
+    loader.querySelector('output').value = '100';
+    loader.classList.add('loaded');
   };
-  let loadProgress = 0;
-  const loadTicker = setInterval(() => {
-    if (!loader) return clearInterval(loadTicker);
-    loadProgress = Math.min(92, loadProgress + Math.ceil((94 - loadProgress) * .13));
-    loader.querySelector('b').style.transform = `scaleX(${loadProgress / 100})`;
-    loader.querySelector('output').value = String(loadProgress).padStart(2, '0');
-  }, 55);
-  const ready = () => { clearInterval(loadTicker); finishLoading(); };
-  if (heroImage?.complete) ready(); else heroImage?.addEventListener('load', ready, { once: true });
-  addEventListener('load', ready, { once: true });
-  setTimeout(ready, 2200);
+  if (heroImage?.complete) finishLoading();
+  else {
+    heroImage?.addEventListener('load', finishLoading, { once: true });
+    heroImage?.addEventListener('error', finishLoading, { once: true });
+  }
+  setTimeout(finishLoading, 1500);
 
+  let navFrame = 0;
   const updateNavigation = () => {
+    navFrame = 0;
     header?.classList.toggle('scrolled', scrollY > 36);
-    const dark = darkSections.some(section => {
+    document.body.classList.toggle('nav-dark', darkSections.some(section => {
       const rect = section.getBoundingClientRect();
-      return rect.top < 74 && rect.bottom > 74;
-    });
-    document.body.classList.toggle('nav-dark', dark);
+      return rect.top < 65 && rect.bottom > 65;
+    }));
   };
-  addEventListener('scroll', updateNavigation, { passive: true });
+  addEventListener('scroll', () => {
+    if (!navFrame) navFrame = requestAnimationFrame(updateNavigation);
+  }, { passive: true });
   updateNavigation();
 
   document.querySelectorAll('[data-tone]').forEach(button => button.addEventListener('click', () => {
     const colors = { ivory: '#e9e5dd', red: '#b8262c', graphite: '#303033', silver: '#c8c9c7' };
     const section = button.closest('.color-story');
     section.style.setProperty('--tone', colors[button.dataset.tone]);
+    section.dataset.activeTone = button.dataset.tone;
     section.querySelectorAll('[data-tone]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
   }));
 
-  const videoObserver = new IntersectionObserver(entries => entries.forEach(entry => {
-    const video = entry.target;
-    if (entry.isIntersecting && !reduced.matches) video.play().catch(() => {});
-    else video.pause();
-  }), { rootMargin: '20% 0px', threshold: .08 });
-  document.querySelectorAll('video').forEach(video => videoObserver.observe(video));
+  // Only the most visible film plays. Native touch scrolling is never intercepted.
+  const films = [...document.querySelectorAll('video')];
+  const visibility = new Map(films.map(video => [video, 0]));
+  const pausedByUser = new Set();
+  const playedByUser = new Set();
+  let currentFilm;
+  const buttonFor = video => document.querySelector(`[data-film-toggle="${video.id}"]`);
+  const updateFilmButton = video => {
+    const button = buttonFor(video);
+    if (!button) return;
+    button.textContent = video.paused ? 'Putar film ↗' : 'Jeda film Ⅱ';
+    button.setAttribute('aria-label', `${video.paused ? 'Putar' : 'Jeda'} film`);
+    button.setAttribute('aria-pressed', String(!video.paused));
+  };
+  const updatePlayback = () => {
+    const candidate = document.hidden ? null : films
+      .filter(video => visibility.get(video) >= .15 && !pausedByUser.has(video) && (!reduced.matches || playedByUser.has(video)))
+      .sort((a, b) => visibility.get(b) - visibility.get(a))[0];
+    films.forEach(video => { if (video !== candidate && !video.paused) video.pause(); });
+    if (candidate && (candidate !== currentFilm || candidate.paused)) {
+      candidate.play().catch(() => updateFilmButton(candidate));
+    }
+    currentFilm = candidate;
+  };
+  const filmObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => visibility.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0));
+    updatePlayback();
+  }, { threshold: [0, .15, .3, .5, .7, .9, 1] });
+  films.forEach(video => {
+    filmObserver.observe(video);
+    video.addEventListener('play', () => updateFilmButton(video));
+    video.addEventListener('pause', () => updateFilmButton(video));
+    buttonFor(video)?.addEventListener('click', () => {
+      if (!video.paused) {
+        pausedByUser.add(video);
+        playedByUser.delete(video);
+        video.pause();
+      } else {
+        pausedByUser.delete(video);
+        playedByUser.add(video);
+        films.forEach(other => { if (other !== video) other.pause(); });
+        currentFilm = video;
+        video.play().catch(() => updateFilmButton(video));
+      }
+    });
+  });
+  document.addEventListener('visibilitychange', updatePlayback);
+  reduced.addEventListener('change', updatePlayback);
 
-  if (!window.gsap || !window.ScrollTrigger || reduced.matches) {
+  if (!window.gsap || !window.ScrollTrigger) {
     document.documentElement.classList.add('motion-fallback');
     return;
   }
-
   const { gsap, ScrollTrigger } = window;
   gsap.registerPlugin(ScrollTrigger);
   ScrollTrigger.config({ ignoreMobileResize: true, limitCallbacks: true });
+  const mm = gsap.matchMedia();
 
-  if (desktop.matches && window.Lenis) {
-    lenis = new Lenis({ duration: .82, smoothWheel: true, syncTouch: false, anchors: true });
+  // Lenis only runs on fine-pointer desktop. Its ticker is removed on breakpoint changes.
+  mm.add('(min-width: 1024px) and (pointer: fine) and (prefers-reduced-motion: no-preference)', () => {
+    if (!window.Lenis) return;
+    lenis = new Lenis({ duration: .7, smoothWheel: true, syncTouch: false, anchors: true });
     window.nitrovaLenis = lenis;
     document.documentElement.classList.add('has-lenis');
     lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add(time => lenis.raf(time * 1000));
-    gsap.ticker.lagSmoothing(0);
-  }
-
-  const mm = gsap.matchMedia();
-  mm.add({ desktop: '(min-width: 1024px)', mobile: '(max-width: 1023px)' }, context => {
-    const isDesktop = context.conditions.desktop;
-    const scrub = isDesktop ? .55 : .18;
-
-    gsap.set('.hero-car', { xPercent: -50, yPercent: -50, transformOrigin: '50% 70%' });
-    gsap.set('.hero-word', { xPercent: -50, yPercent: -50 });
-    gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom bottom', scrub } })
-      .to('.hero-word', { x: isDesktop ? '-8vw' : '-4vw', y: isDesktop ? -35 : -15, scale: 1.05 }, 0)
-      .to('.hero-car', { x: isDesktop ? '14vw' : '8vw', y: isDesktop ? -28 : -10, scale: isDesktop ? 1.18 : 1.09 }, 0)
-      .to('.hero-halo', { scale: 1.18, opacity: .55 }, 0)
-      .to('.hero-copy', { y: isDesktop ? -95 : -46, opacity: 0 }, .52)
-      .to('.hero-kicker', { x: isDesktop ? 60 : 22, opacity: 0 }, .58)
-      .to('.hero-bottom', { y: 24, opacity: 0 }, .34)
-      .to('.hero-shadow', { x: isDesktop ? '9vw' : '5vw', scaleX: 1.18, opacity: .5 }, 0);
-
-    gsap.set('.performance-title h2', { clipPath: 'inset(0 100% 0 0)' });
-    gsap.set('.performance-stats > div', { y: 55, opacity: 0 });
-    gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.performance-story', start: 'top top', end: 'bottom bottom', scrub } })
-      .fromTo('.performance-pin video', { scale: 1.13, xPercent: -2 }, { scale: 1.01, xPercent: 1.5, duration: .55 }, 0)
-      .to('.performance-title h2', { clipPath: 'inset(0 0% 0 0)', duration: .32 }, .04)
-      .to('.performance-stats > div', { y: 0, opacity: 1, stagger: .055, duration: .25 }, .22)
-      .to('.performance-title', { x: isDesktop ? '-7vw' : '-3vw', opacity: .15, duration: .28 }, .68)
-      .to('.performance-stats', { y: -35, opacity: 0, duration: .2 }, .78)
-      .to('.performance-pin video', { scale: 1.08, opacity: .45, duration: .2 }, .8);
-
-    gsap.set('.parallax-car', { xPercent: isDesktop ? 0 : -50, yPercent: -50 });
-    gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.parallax-scene', start: 'top bottom', end: 'bottom top', scrub } })
-      .fromTo('.parallax-bg', { yPercent: -5, scale: 1.06 }, { yPercent: 7, scale: 1 }, 0)
-      .fromTo('.parallax-word', { xPercent: 6, y: 80 }, { xPercent: -8, y: -95 }, 0)
-      .fromTo('.parallax-car', { xPercent: isDesktop ? -4 : -52, y: isDesktop ? 40 : 12, scale: isDesktop ? 1.1 : 1.02 }, { xPercent: isDesktop ? 5 : -48, y: isDesktop ? -75 : -22, scale: isDesktop ? 1.02 : 1 }, 0)
-      .fromTo('.parallax-copy', { y: 100, clipPath: 'inset(0 0 100% 0)' }, { y: -70, clipPath: 'inset(0 0 0% 0)' }, .08)
-      .fromTo('.parallax-foreground', { y: -40 }, { y: 105 }, 0);
-
-    gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.design-story', start: 'top top', end: 'bottom bottom', scrub } })
-      .fromTo('.design-intro h2', { y: 80, clipPath: 'inset(0 0 100% 0)' }, { y: 0, clipPath: 'inset(0 0 0% 0)', duration: .28 }, 0)
-      .fromTo('.design-image', { clipPath: 'inset(18% 14% 18% 14%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: .52 }, .12)
-      .fromTo('.design-image img', { xPercent: isDesktop ? -8 : 0, yPercent: isDesktop ? -4 : 0, scale: isDesktop ? 1.16 : 1.05 }, { xPercent: isDesktop ? -8 : 0, yPercent: isDesktop ? 3 : 0, scale: isDesktop ? 1.03 : 1, duration: .76 }, .1)
-      .fromTo('.design-notes article', { x: isDesktop ? 70 : 24, opacity: 0 }, { x: 0, opacity: 1, stagger: .08, duration: .22 }, .28);
-
-    gsap.set('.color-story > img', { xPercent: -50, yPercent: -50 });
-    gsap.set('.color-word', { xPercent: -50, yPercent: -50 });
-    gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.color-story', start: 'top bottom', end: 'bottom top', scrub } })
-      .fromTo('.color-word', { scale: .86, x: isDesktop ? '-7vw' : '-3vw' }, { scale: 1.08, x: isDesktop ? '5vw' : '2vw' }, 0)
-      .fromTo('.color-story > img', { x: isDesktop ? '-5vw' : '-2vw', y: 35, scale: .94 }, { x: isDesktop ? '5vw' : '2vw', y: -25, scale: 1.06 }, 0)
-      .fromTo('.color-copy', { y: 65, opacity: .2 }, { y: -25, opacity: 1 }, .05);
-
-    gsap.set('.engineering-list article', { opacity: .18 });
-    gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.engineering-story', start: 'top top', end: 'bottom bottom', scrub } })
-      .fromTo('.engineering-word', { xPercent: 8 }, { xPercent: -18, duration: 1 }, 0)
-      .fromTo('.engineering-head h2', { y: 70, clipPath: 'inset(0 0 100% 0)' }, { y: 0, clipPath: 'inset(0 0 0% 0)', duration: .26 }, 0)
-      .to('.engineering-list article', { opacity: 1, x: 0, stagger: .12, duration: .22 }, .18)
-      .to('.engineering-head', { y: isDesktop ? -70 : -25, opacity: .28, duration: .25 }, .7);
-
-    gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.drive-film', start: 'top top', end: 'bottom bottom', scrub } })
-      .fromTo('.drive-film video', { scale: 1.1, xPercent: -2 }, { scale: 1, xPercent: 2 }, 0)
-      .fromTo('.drive-copy', { y: 75, opacity: 0, clipPath: 'inset(0 0 100% 0)' }, { y: 0, opacity: 1, clipPath: 'inset(0 0 0% 0)', duration: .4 }, .16)
-      .to('.drive-copy', { y: -70, opacity: 0, duration: .24 }, .72)
-      .to('.drive-film video', { scale: 1.06, opacity: .65, duration: .24 }, .76);
-
-    const galleryLayers = gsap.utils.toArray('[data-gallery-layer]');
-    gsap.set(galleryLayers, { opacity: 0, clipPath: 'inset(100% 0 0 0)', scale: 1.08 });
-    gsap.set(galleryLayers[0], { opacity: 1, clipPath: 'inset(0% 0 0 0)', scale: 1 });
-    let galleryIndex = -1;
-    const galleryTimeline = gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: {
-      trigger: '.camera-gallery', start: 'top top', end: 'bottom bottom', scrub,
-      onUpdate(self) {
-        const index = Math.min(3, Math.floor(self.progress * 4));
-        if (index !== galleryIndex) {
-          galleryIndex = index;
-          window.NitrovaGallery?.select(index);
-          if (!isDesktop) galleryLayers.forEach((layer, i) => { layer.style.visibility = Math.abs(i - index) <= 1 ? 'visible' : 'hidden'; });
-        }
-      }
-    }});
-    galleryLayers.slice(1).forEach((layer, index) => {
-      const at = (index + 1) / 4;
-      galleryTimeline.to(layer, { opacity: 1, clipPath: 'inset(0% 0 0 0)', scale: 1, duration: .18 }, at)
-        .to(galleryLayers[index], { scale: .94, opacity: .28, duration: .18 }, at);
-    });
-    galleryTimeline.fromTo('.camera-frame-caption', { y: 35 }, { y: -12, duration: 1 }, 0);
-
-    gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.collection-section', start: 'top bottom', end: 'top 15%', scrub } })
-      .fromTo('.catalog-word', { xPercent: 8, opacity: 0 }, { xPercent: -8, opacity: 1 }, 0);
-
-    gsap.set('.final-scene img', { xPercent: -50, yPercent: -50 });
-    gsap.set('.final-word', { xPercent: -50, yPercent: -50 });
-    gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: '.final-scene', start: 'top bottom', end: 'bottom bottom', scrub } })
-      .fromTo('.final-word', { xPercent: -43, opacity: .25 }, { xPercent: -57, opacity: 1 }, 0)
-      .fromTo('.final-scene img', { x: isDesktop ? '-12vw' : '-6vw', y: 45, scale: .94 }, { x: isDesktop ? '10vw' : '5vw', y: -20, scale: 1.05 }, 0)
-      .fromTo('.final-copy', { y: 80, opacity: 0 }, { y: 0, opacity: 1 }, .24);
+    const tick = time => lenis?.raf(time * 1000);
+    gsap.ticker.add(tick);
+    return () => {
+      gsap.ticker.remove(tick);
+      lenis?.destroy();
+      lenis = undefined;
+      window.nitrovaLenis = undefined;
+      document.documentElement.classList.remove('has-lenis');
+    };
   });
 
-  addEventListener('nitrova:gallery-select', event => {
-    const section = document.querySelector('.camera-gallery');
-    if (!section) return;
-    const distance = section.offsetHeight - innerHeight;
-    const target = section.offsetTop + distance * (event.detail.index / 3);
-    if (lenis) lenis.scrollTo(target, { duration: .8 });
-    else scrollTo({ top: target, behavior: 'smooth' });
+  const layers = [...document.querySelectorAll('[data-gallery-layer]')];
+  const resetGallery = () => layers.forEach(layer => {
+    ['opacity', 'visibility', 'transform'].forEach(property => layer.style.removeProperty(property));
+  });
+  mm.add({
+    desktop: '(min-width: 1024px)',
+    compact: '(max-width: 1023px)',
+    short: '(max-width: 1023px) and (max-height: 650px)',
+    reduce: '(prefers-reduced-motion: reduce)'
+  }, context => {
+    const { desktop: isDesktop, short: isShort, reduce } = context.conditions;
+    document.documentElement.classList.toggle('motion-fallback', reduce);
+    if (reduce) return () => document.documentElement.classList.remove('motion-fallback');
+    const scrub = isDesktop ? .45 : .12;
+    const timeline = (trigger, start = 'top bottom', end = 'bottom top') => gsap.timeline({
+      defaults: { ease: 'none' }, scrollTrigger: { trigger, start, end, scrub, invalidateOnRefresh: true }
+    });
+
+    gsap.set(['.hero-car', '.hero-word', '.color-story>img', '.color-word', '.final-scene img', '.final-word'], { xPercent: -50, yPercent: -50 });
+    timeline('.hero', 'top top', 'bottom bottom')
+      .to('.hero-word', { x: isDesktop ? '-6vw' : '-2vw', y: -18, scale: 1.02 }, 0)
+      .to('.hero-car', { x: isDesktop ? '8vw' : '1vw', y: isDesktop ? -24 : -8, scale: isDesktop ? 1.12 : 1.025 }, 0)
+      .to('.hero-halo', { scale: 1.08, opacity: .65 }, 0)
+      .to('.hero-copy', { y: isDesktop ? -55 : -16, opacity: 0, duration: .28 }, .68)
+      .to('.hero-kicker,.hero-bottom', { opacity: 0, duration: .3 }, .62);
+
+    timeline('.performance-story', 'top 85%', 'bottom top')
+      .fromTo('.performance-pin video', { scale: 1.06 }, { scale: 1, duration: 1 }, 0)
+      .fromTo('.performance-title', { y: isDesktop ? 55 : 20 }, { y: isDesktop ? -30 : -8, duration: 1 }, 0)
+      .fromTo('.performance-stats>div', { y: 20, opacity: .55 }, { y: 0, opacity: 1, stagger: .08, duration: .3 }, .08);
+
+    // No absolute left offsets or -50% centering on this normal-flow car stage.
+    timeline('.parallax-scene')
+      .fromTo('.parallax-bg', { yPercent: -3 }, { yPercent: 3 }, 0)
+      .fromTo('.parallax-word', { xPercent: isDesktop ? 5 : 2, y: 15 }, { xPercent: isDesktop ? -5 : -2, y: -15 }, 0)
+      .fromTo('.parallax-car', { x: isDesktop ? -35 : -5, y: isDesktop ? 20 : 6, scale: .94 }, { x: isDesktop ? 35 : 5, y: isDesktop ? -22 : -6, scale: isDesktop ? 1 : .98 }, 0)
+      .fromTo('.parallax-copy', { y: isDesktop ? 25 : 8 }, { y: isDesktop ? -20 : -5 }, 0);
+
+    timeline('.design-story', 'top 90%', 'bottom 15%')
+      .fromTo('.design-intro h2', { y: isDesktop ? 32 : 12 }, { y: 0, duration: .4 }, 0)
+      .fromTo('.design-film-stage', { y: isDesktop ? 40 : 14, scale: .97 }, { y: 0, scale: 1, duration: .7 }, 0)
+      .fromTo('.design-notes article', { y: 12, opacity: .6 }, { y: 0, opacity: 1, stagger: .06, duration: .5 }, .1);
+
+    timeline('.color-story')
+      .fromTo('.color-word', { x: '-3vw', scale: .95 }, { x: '3vw', scale: 1.02 }, 0)
+      .fromTo('.color-story>img', { x: isDesktop ? '-3vw' : '-1vw', y: 12, scale: .96 }, { x: isDesktop ? '3vw' : '1vw', y: -12, scale: 1 }, 0);
+
+    timeline('.engineering-story', isDesktop ? 'top top' : 'top 85%', isDesktop ? 'bottom bottom' : 'bottom 30%')
+      .fromTo('.engineering-word', { xPercent: 4 }, { xPercent: -8, duration: 1 }, 0)
+      .fromTo('.engineering-head h2', { y: isDesktop ? 30 : 12 }, { y: 0, duration: .35 }, 0)
+      .fromTo('.engineering-list article', { y: isDesktop ? 20 : 8, opacity: .55 }, { y: 0, opacity: 1, stagger: .12, duration: .3 }, .1);
+
+    timeline('.drive-film', 'top bottom', 'bottom top')
+      .fromTo('.drive-pin video', { scale: 1.06 }, { scale: 1 }, 0)
+      .fromTo('.drive-copy', { y: isDesktop ? 50 : 16 }, { y: isDesktop ? -35 : -8 }, 0);
+
+    let galleryTrigger;
+    let galleryIndex = -1;
+    if (!isShort) {
+      galleryTrigger = ScrollTrigger.create({
+        trigger: '.camera-gallery', start: 'top top', end: 'bottom bottom',
+        onUpdate(self) {
+          // A quarter chapter per image, with a short overlap. Reversible in both directions.
+          const position = Math.max(0, Math.min(3, self.progress * 4 - .5));
+          const first = Math.floor(position);
+          const next = Math.min(3, first + 1);
+          const mix = position - first;
+          const index = mix >= .5 ? next : first;
+          if (index !== galleryIndex) {
+            galleryIndex = index;
+            window.NitrovaGallery?.select(index);
+          }
+          layers.forEach((layer, i) => {
+            const visible = i === first || (i === next && mix > 0);
+            layer.style.visibility = visible ? 'visible' : 'hidden';
+            layer.style.opacity = i === first ? String(1 - mix) : i === next ? String(mix) : '0';
+            if (first === next && i === first) layer.style.opacity = '1';
+            if (visible) layer.style.transform = `translate3d(0,${i === first ? -mix * 3 : (1 - mix) * 3}%,0)`;
+          });
+        }
+      });
+    }
+    const chooseGallery = event => {
+      if (!galleryTrigger) return;
+      const target = galleryTrigger.start + (galleryTrigger.end - galleryTrigger.start) * ((event.detail.index + .5) / 4);
+      if (lenis) lenis.scrollTo(target, { duration: .5 });
+      else scrollTo({ top: target, behavior: 'smooth' });
+    };
+    addEventListener('nitrova:gallery-select', chooseGallery);
+
+    timeline('.collection-section', 'top bottom', 'top 20%')
+      .fromTo('.catalog-word', { xPercent: 3 }, { xPercent: -3 }, 0);
+    timeline('.final-scene', 'top bottom', 'bottom bottom')
+      .fromTo('.final-word', { x: '3vw' }, { x: '-3vw' }, 0)
+      .fromTo('.final-scene img', { x: isDesktop ? '-6vw' : '-1vw', y: 18, scale: .96 }, { x: isDesktop ? '4vw' : '1vw', y: 0, scale: 1 }, 0)
+      .fromTo('.final-copy', { y: isDesktop ? 35 : 12, opacity: .7 }, { y: 0, opacity: 1 }, 0);
+
+    return () => {
+      removeEventListener('nitrova:gallery-select', chooseGallery);
+      resetGallery();
+    };
   });
 
   const refresh = () => ScrollTrigger.refresh();
   document.fonts?.ready.then(refresh);
   addEventListener('load', refresh, { once: true });
+  compact.addEventListener('change', refresh);
+  // Pages restored from the back-forward cache may retain a mid-chapter scroll position.
+  addEventListener('pageshow', event => { if (event.persisted) { refresh(); updatePlayback(); } });
+  addEventListener('pagehide', event => { if (!event.persisted) { mm.revert(); filmObserver.disconnect(); } });
 })();

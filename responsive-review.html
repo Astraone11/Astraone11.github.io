@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>NITROVA — Responsive Review</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#d7d4cd;color:#111;font:13px/1.5 system-ui,sans-serif}header{min-height:74px;padding:12px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:#fff;border-bottom:1px solid #bbb}strong{letter-spacing:.08em}label{display:flex;align-items:center;gap:8px}select,button{font:inherit;min-height:36px;padding:6px 10px;border:1px solid #aaa;background:#fff;color:#111}button{cursor:pointer}main{padding:18px;overflow:auto}iframe{display:block;box-sizing:content-box;margin:0 auto;border:1px solid #b7b3ab;background:#f4f1eb;width:390px;height:844px}small{color:#666}a{color:inherit}
+  </style>
+</head>
+<body>
+  <header>
+    <strong>NITROVA / REVIEW</strong>
+    <label>Viewport <select id="viewport"><option value="360,800">360 × 800</option><option value="390,844" selected>390 × 844</option><option value="430,932">430 × 932</option><option value="768,1024">768 × 1024</option><option value="980,880">980 × 880</option><option value="844,390">844 × 390 landscape</option><option value="1440,900">1440 × 900</option><option value="1920,1080">1920 × 1080</option></select></label>
+    <label>Chapter <select id="chapter"><option value="home">Hero</option><option value="experience">Performance</option><option value="motion">In Motion</option><option value="design">Design / Porsche film</option><option value="technology">Engineering</option><option value="gallery">Gallery</option><option value="showroom">Interactive studio</option><option value="cars">Collection</option></select></label>
+    <button id="reload" type="button">Reload chapter</button>
+    <a href="./">Open website ↗</a>
+    <small>Layout preview · not a physical-device performance test</small>
+  </header>
+  <main><iframe id="preview" title="NITROVA responsive preview" src="./index.html" allow="autoplay; fullscreen"></iframe></main>
+  <script>
+    const frame=document.getElementById('preview');
+    const viewport=document.getElementById('viewport');
+    const chapter=document.getElementById('chapter');
+    viewport.addEventListener('change',()=>{const [width,height]=viewport.value.split(',');frame.style.width=width+'px';frame.style.height=height+'px'});
+    chapter.addEventListener('change',()=>{frame.src='./index.html#'+chapter.value});
+    document.getElementById('reload').addEventListener('click',()=>{frame.src='./index.html?review='+Date.now()+'#'+chapter.value});
+  </script>
+</body>
+</html>
