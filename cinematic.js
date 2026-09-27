@@ -4,7 +4,7 @@
   const header = document.querySelector('.site-header');
   const heroImage = document.querySelector('.hero-car');
   const loader = document.querySelector('.page-loader');
-  const darkSections = [...document.querySelectorAll('.performance-story,.engineering-story,.drive-film,.camera-gallery,.final-scene')];
+  const darkSections = [...document.querySelectorAll('.performance-story,.engineering-story,.drive-film,.final-scene')];
   let lenis;
 
   const finishLoading = () => {
