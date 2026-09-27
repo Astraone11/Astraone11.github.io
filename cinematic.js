@@ -222,8 +222,31 @@
   });
 
   const refresh = () => ScrollTrigger.refresh();
+  // The browser may resolve an initial #gallery/#design jump before fonts and
+  // pinned sections have their final dimensions. Re-align once after load.
+  const initialHash = location.hash;
+  let userNavigated = false;
+  addEventListener('hashchange', () => { userNavigated = true; });
+  const alignInitialHash = () => {
+    if (!initialHash || initialHash.startsWith('#car/') || userNavigated || location.hash !== initialHash) return;
+    const section = document.getElementById(decodeURIComponent(initialHash.slice(1)));
+    if (!section) return;
+    refresh();
+    const top = section.getBoundingClientRect().top + scrollY - header.getBoundingClientRect().height;
+    if (lenis) lenis.scrollTo(top, { immediate: true });
+    else scrollTo({ top, behavior: 'instant' });
+    updateNavigation();
+  };
   document.fonts?.ready.then(refresh);
-  addEventListener('load', refresh, { once: true });
+  addEventListener('load', () => { refresh(); setTimeout(alignInitialHash, 120); }, { once: true });
+  document.addEventListener('click', event => {
+    const anchor = event.target.closest('a[href^="#"]');
+    if (!anchor || anchor.hash !== location.hash || anchor.hash.startsWith('#car/')) return;
+    const target = document.getElementById(decodeURIComponent(anchor.hash.slice(1)));
+    if (!target) return;
+    if (lenis) lenis.scrollTo(target, { duration: .5 });
+    else target.scrollIntoView({ behavior: reduced.matches ? 'instant' : 'smooth' });
+  });
   compact.addEventListener('change', refresh);
   // Pages restored from the back-forward cache may retain a mid-chapter scroll position.
   addEventListener('pageshow', event => { if (event.persisted) { refresh(); updatePlayback(); } });
