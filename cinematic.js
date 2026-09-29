@@ -4,7 +4,15 @@
   const header = document.querySelector('.site-header');
   const heroImage = document.querySelector('.hero-car');
   const loader = document.querySelector('.page-loader');
+  const ambientFilm = document.querySelector('#site-background-film');
   const darkSections = [...document.querySelectorAll('.performance-story,.engineering-story,.drive-film,.final-scene')];
+  let foregroundFilmActive = false;
+  const syncAmbientPlayback = () => {
+    if (!ambientFilm) return;
+    if (document.hidden || reduced.matches || foregroundFilmActive || document.body.classList.contains('nav-dark')) {
+      if (!ambientFilm.paused) ambientFilm.pause();
+    } else if (ambientFilm.paused) ambientFilm.play().catch(() => {});
+  };
   let lenis;
 
   const finishLoading = () => {
@@ -28,6 +36,7 @@
       const rect = section.getBoundingClientRect();
       return rect.top < 65 && rect.bottom > 65;
     }));
+    syncAmbientPlayback();
   };
   addEventListener('scroll', () => {
     if (!navFrame) navFrame = requestAnimationFrame(updateNavigation);
@@ -43,7 +52,7 @@
   }));
 
   // Only the most visible film plays. Native touch scrolling is never intercepted.
-  const films = [...document.querySelectorAll('video')];
+  const films = [...document.querySelectorAll('video:not(#site-background-film)')];
   const visibility = new Map(films.map(video => [video, 0]));
   const pausedByUser = new Set();
   const playedByUser = new Set();
@@ -65,6 +74,8 @@
       candidate.play().catch(() => updateFilmButton(candidate));
     }
     currentFilm = candidate;
+    foregroundFilmActive = Boolean(candidate);
+    syncAmbientPlayback();
   };
   const filmObserver = new IntersectionObserver(entries => {
     entries.forEach(entry => visibility.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0));
