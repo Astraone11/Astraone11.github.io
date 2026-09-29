@@ -19,6 +19,18 @@
 .car-dialog{border:0;padding:0;width:min(1080px,calc(100% - 30px));background:var(--paper);color:#111}.car-dialog::backdrop{background:#000b;backdrop-filter:blur(8px)}.dialog-wrap{display:grid;grid-template-columns:1.2fr 1fr;min-height:600px}.dialog-close{position:absolute;right:14px;top:14px;z-index:3;width:39px;height:39px;border:1px solid #111;background:#fff;cursor:pointer}.dialog-media{padding:30px;background:#e5e1da}.dialog-media>img{width:100%;height:470px;object-fit:contain}.dialog-gallery{display:flex;gap:8px}.dialog-gallery button{width:75px;height:52px;border:1px solid transparent;background:#fff}.dialog-gallery button[aria-pressed=true]{border-color:#111}.dialog-gallery img{width:100%;height:100%;object-fit:contain}.dialog-body{padding:60px 42px}.dialog-body h2{font:570 49px Space;letter-spacing:-.05em;margin:12px 0}.dialog-body>p{color:var(--muted);line-height:1.65}.dialog-facts{display:flex;gap:7px}.dialog-facts span{border:1px solid var(--line);font-size:8px;padding:6px}.spec-grid{display:grid;grid-template-columns:1fr 1fr;margin:25px 0}.spec-grid div{border-top:1px solid var(--line);padding:12px 0}.spec-grid dt{font-size:8px;color:var(--muted)}.spec-grid dd{margin:4px 0;font-size:11px;font-weight:650}.dialog-actions{display:flex;gap:7px;flex-wrap:wrap}.dialog-body>small{display:block;color:var(--muted);margin-top:18px;line-height:1.5}.reveal{opacity:0;transform:translateY(45px);transition:opacity .9s var(--ease),transform .9s var(--ease)}.reveal.visible{opacity:1;transform:none}@keyframes sweep{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
 
 /* One composition breakpoint: compact <=1023, cinematic desktop >=1024. */
+.site-ambient-film { position: fixed; z-index: 0; inset: 0; width: 100%; max-width: none; height: 100svh; object-fit: cover; object-position: center; pointer-events: none; background: #e7e3dc; }
+main,.footer { position: relative; z-index: 1; }
+.hero-pin { background: rgba(244,241,235,.62); }
+.parallax-scene { background: rgba(232,228,220,.59); }
+.design-story { background: rgba(251,250,247,.64); }
+.camera-gallery { background: rgba(241,238,232,.68); }
+.featured-section,.collection-section,.studio-section { background: rgba(251,250,247,.79); }
+.brand-section { background: rgba(244,241,235,.76); }
+.porsche-section { background: rgba(217,213,207,.79); }
+.brand-section-light { background: rgba(233,229,223,.79); }
+.arrivals-section { background: rgba(221,216,208,.79); }
+.footer { background: rgba(244,241,235,.86); }
 html { scroll-padding-top: 78px; }
 body { width: 100%; overflow-x: clip; }
 :focus-visible { outline: 2px solid var(--red); outline-offset: 5px; }
@@ -316,6 +328,7 @@ body { width: 100%; overflow-x: clip; }
 .motion-fallback .drive-pin { position: relative; }
 .motion-fallback .engineering-list article { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) {
+  .site-ambient-film { display: none; }
   html { scroll-behavior: auto; }
   *,*::before,*::after { animation-duration: .01ms!important; transition-duration: .01ms!important; }
   .page-loader { display: none; }
